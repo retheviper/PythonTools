@@ -1,4 +1,3 @@
-from operator import contains
 import os
 import magic
 import mimetypes
