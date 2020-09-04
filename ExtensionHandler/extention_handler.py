@@ -1,8 +1,7 @@
 import os
+import sys
 import magic
 import mimetypes
-import os
-import sys
 
 if len(sys.argv) < 2:
     print('Need argument of base path. quitting.')
