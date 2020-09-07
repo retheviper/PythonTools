@@ -11,4 +11,4 @@ Dicide lunch menu (in Korean)
 
 ## Screenshot
 
-![screenshot](screenshot.png)
+![screenshot](screenshot.gif)
