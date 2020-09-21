@@ -2,7 +2,7 @@
 
 ## TL;DR
 
-Change file's extension to its real type, lowercase.
+Change file's extension to its real type, lowercase. (Recursive)
 
 ## To Use
 
