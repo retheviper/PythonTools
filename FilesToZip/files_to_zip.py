@@ -19,6 +19,5 @@ for root, subdirs, files in os.walk(walk_dir):
         if os.path.exists(archive):
             os.remove(archive)
         
-        print(root)
         os.chdir(root)
         patoolib.create_archive(archive, files)
