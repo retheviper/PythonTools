@@ -12,7 +12,13 @@ print('Base path: ' + os.path.abspath(walk_dir))
 
 for root, subdirs, files in os.walk(walk_dir):
 
-    if walk_dir != root:
+    if walk_dir != root and files:
+
+        archive = root + '.zip'
+
+        if os.path.exists(archive):
+            os.remove(archive)
         
+        print(root)
         os.chdir(root)
-        patoolib.create_archive(root + '.zip', files)
+        patoolib.create_archive(archive, files)
