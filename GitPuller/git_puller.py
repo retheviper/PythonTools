@@ -16,4 +16,5 @@ for root, subdirs, files in os.walk(walk_dir):
         repo = git.Repo(root)
         branch = repo.active_branch
         print('Pulling [{}]'.format(root))
+        os.chdir(root)
         os.system('git pull origin {}'.format(branch.name))
