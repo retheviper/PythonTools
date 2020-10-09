@@ -23,5 +23,9 @@ for root, subdirs, files in os.walk(walk_dir):
 
         if guess_mime_type == 'application/x-rar-compressed':
             file_name = os.path.splitext(file_path)[0]
-            patoolib.repack_archive(file_path, file_name + '.zip')
-            os.remove(file_path)
+            try:
+                patoolib.repack_archive(file_path, file_name + '.zip')
+                os.remove(file_path)
+                print('Repacked to zip', file_path)
+            except:
+                continue

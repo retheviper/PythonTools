@@ -28,10 +28,20 @@ for root, subdirs, files in os.walk(walk_dir):
         file_name_splited = os.path.splitext(file_path)
         extension = file_name_splited[1]
 
-        if guess_mime_type != actual_mime_type and 'application' not in actual_mime_type:
-            print('Change {0}\'s extention because it looks like {1} but actually {2}'.format(filename, guess_mime_type, actual_mime_type))
-            os.rename(file_path, file_name_splited[0] + mimetypes.guess_extension(actual_mime_type, True))
+        try:
+            if extension.isupper():
+                print('Change {0}\'s extention to lowercase'.format(filename))
+                os.rename(file_path, file_name_splited[0] + extension.lower())
+        except:
+            continue
+        
+        # Except case '.m4a'
+        if 'audio/mp4a-latm' == guess_mime_type and 'audio/x-m4a' == actual_mime_type:
+            continue
 
-        if extension.isupper():
-            print('Change {0}\'s extention to lowercase'.format(filename))
-            os.rename(file_path, file_name_splited[0] + extension.lower())
+        try:
+            if guess_mime_type != actual_mime_type and 'application' not in actual_mime_type:
+                print('Change {0}\'s extention because it looks like {1} but actually {2}'.format(filename, guess_mime_type, actual_mime_type))
+                os.rename(file_path, file_name_splited[0] + mimetypes.guess_extension(actual_mime_type, True))
+        except:
+            continue

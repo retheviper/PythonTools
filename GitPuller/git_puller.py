@@ -13,8 +13,11 @@ print('Base path: ' + walk_dir)
 for root, subdirs, files in os.walk(walk_dir):
     
     if '.git' in subdirs:
-        branch = git.Repo(root).active_branch.name
-        print('Pulling [{}]'.format(root))
-        os.chdir(root)
-        os.system('git pull origin {}'.format(branch))
-        subdirs[:] = []
+        try:
+            branch = git.Repo(root).active_branch.name
+            print('Pulling [{}]'.format(root))
+            os.chdir(root)
+            os.system('git pull origin {}'.format(branch))
+            subdirs[:] = []
+        except:
+            continue

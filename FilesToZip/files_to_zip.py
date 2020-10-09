@@ -15,9 +15,12 @@ for root, subdirs, files in os.walk(walk_dir):
     if walk_dir != root and files:
 
         archive = root + '.zip'
-
-        if os.path.exists(archive):
-            os.remove(archive)
-        
         os.chdir(root)
-        patoolib.create_archive(archive, files)
+
+        try:
+            if os.path.exists(archive):
+                os.remove(archive)
+            patoolib.create_archive(archive, files)
+            print('Zipped', root)
+        except:
+            continue

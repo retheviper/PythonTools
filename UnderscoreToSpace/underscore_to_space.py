@@ -20,5 +20,8 @@ for root, subdirs, files in os.walk(walk_dir):
         if '_' in filename:
             file_path = os.path.join(root, filename)
             file_renamed_path = os.path.join(root, filename.replace('_', ' '))
-            print('Changing {} to {}.'.format(file_path, file_renamed_path))
-            os.rename(file_path, file_renamed_path)
+            try:
+                os.rename(file_path, file_renamed_path)
+                print('Changed {} to {}.'.format(file_path, file_renamed_path))
+            except:
+                continue

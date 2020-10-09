@@ -24,6 +24,9 @@ for root, subdirs, files in os.walk(walk_dir):
             if filename is not filename2 and filecmp.cmp(file_path, file2_path):
     
                 long_duplicate = file_path if len(filename) > len(filename2) else file2_path
-                print("'{}' and '{}' is same file. deleting '{}'.".format(file_path, file2_path, long_duplicate))
-                sub_files.remove(os.path.split(long_duplicate)[1])
-                os.remove(long_duplicate)
+                try:
+                    sub_files.remove(os.path.split(long_duplicate)[1])
+                    os.remove(long_duplicate)
+                    print("'{}' and '{}' is same file. deleted '{}'.".format(file_path, file2_path, long_duplicate))
+                except:
+                    continue
