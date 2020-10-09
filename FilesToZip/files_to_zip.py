@@ -17,10 +17,11 @@ for root, subdirs, files in os.walk(walk_dir):
         archive = root + '.zip'
         os.chdir(root)
 
+        files[:] = [file for file in files if not file.startswith('.')]
+
         try:
             if os.path.exists(archive):
                 os.remove(archive)
             patoolib.create_archive(archive, files)
-            print('Zipped', root)
         except:
             continue
