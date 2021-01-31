@@ -1,6 +1,5 @@
 import os
 import sys
-import filecmp
 
 if len(sys.argv) < 2:
     print('Need argument of base path. quitting.')
