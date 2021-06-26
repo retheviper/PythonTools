@@ -1,7 +1,6 @@
 import os
 import sys
 import codecs
-import magic
 import chardet
 
 if len(sys.argv) < 3:
@@ -11,7 +10,6 @@ if len(sys.argv) < 3:
 file_path = os.path.abspath(sys.argv[1])
 milsec = int(float(sys.argv[2]) * 1000)
 ignore = 'ignore'
-f = magic.Magic(uncompress = True, mime_encoding = True)
 with open(file_path, mode='rb') as file:
     binary = file.read()
     encoding = chardet.detect(binary)['encoding']
