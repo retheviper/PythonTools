@@ -5,7 +5,7 @@ if len(sys.argv) < 2:
     print('Need argument of birth year. quitting.')
     sys.exit(1)
 
-branches = [
+animals = [
     "Monkey (申)",
     "Rooster (酉)",
     "Dog (戌)",
@@ -24,7 +24,7 @@ birth_year = int(sys.argv[1])
 currentYear = datetime.now().year
 
 age = currentYear - birth_year + 1
-branch = branches[birth_year % 12]
+animal = animals[birth_year % 12]
 
 print("Your korean age is:", age)
-print("Your Earthly branch is:", branch)
+print("Your associated animal is:", animal)
