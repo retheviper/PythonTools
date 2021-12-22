@@ -21,10 +21,10 @@ animals = [
     ]
 
 birth_year = int(sys.argv[1])
-currentYear = datetime.now().year
+current_year = datetime.now().year
 
-age = currentYear - birth_year + 1
+age = current_year - birth_year + 1
 animal = animals[birth_year % 12]
 
-print("Your korean age is:", age)
+print("Your Korean age is:", age)
 print("Your associated animal is:", animal)
