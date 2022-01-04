@@ -6,4 +6,4 @@ Remove files in the same path with longer name but the contents is same. (Recurs
 
 ## To Use
 
-1. run `python3 duplicate_remover.py /dir`
+1. Run `python3 duplicate_remover.py /dir`

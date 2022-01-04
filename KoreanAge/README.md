@@ -6,4 +6,4 @@ Calculate [Korean age](https://en.wikipedia.org/wiki/East_Asian_age_reckoning#Ko
 
 ## To Use
 
-1. run `python3 korean_age.py 1990`
+1. Run `python3 korean_age.py 1990`
