@@ -2,7 +2,7 @@
 
 ## TL;DR
 
-Encode `.ts`(MPEG transport stream, not TypeScript) file to MP4. (Recursive)
+Encode `.ts`(MPEG transport stream, not TypeScript) and `.m2ts` file to MP4. (Recursive)
 
 ## To Use
 

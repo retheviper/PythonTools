@@ -13,7 +13,7 @@ for root, subdirs, files in os.walk(walk_dir):
 
     for filename in files:
 
-        if filename.endswith('.ts'):
+        if filename.endswith('.ts') or filename.endswith('.m2ts'):
             input_path = os.path.join(root, filename)
             output_path = os.path.splitext(input_path)[0] + ".mp4"
             print("converting\r\n\t{0}\r\nto\r\n\t{1}".format(input_path, output_path))
