@@ -17,7 +17,7 @@ animals = [
     "Dragon (辰)",
     "Snake (巳)",
     "Horse (午)",
-    "Goat (未)"
+    "Sheep (未)"
     ]
 
 birth_year = int(sys.argv[1])
