@@ -47,6 +47,7 @@ def print_result(changed_file_list):
 
 def rename_files(walk_dir):
     changed_file_list = []
+    blank = ''
 
     for root, _, files in os.walk(walk_dir):
         for filename in files:
@@ -56,23 +57,24 @@ def rename_files(walk_dir):
 
             renamed_file_name = filename
 
-            renamed_file_name = renamed_file_name.replace('_', underbar_to)
+            if underbar_to is not blank:
+                renamed_file_name = renamed_file_name.replace('_', underbar_to)
 
             if to_lowercase:
                 renamed_file_name = renamed_file_name.lower()
 
-            if prefix not in renamed_file_name:
+            if prefix is not blank and prefix not in renamed_file_name:
                 renamed_file_name = "{}{}".format(prefix, renamed_file_name)
 
-            if suffix not in renamed_file_name:
+            if suffix is not blank and suffix not in renamed_file_name:
                 renamed_file_name = "{}{}".format(renamed_file_name.rpartition('.')[0], suffix)
 
             for target in remove_targets:
-                if target in filename:
-                    renamed_file_name = renamed_file_name.replace(target, '')
+                if target is not blank and target in filename:
+                    renamed_file_name = renamed_file_name.replace(target, blank)
 
             for target in change_targets:
-                if target in filename:
+                if target is not blank and target in filename:
                     renamed_file_name = renamed_file_name.replace(target, change_to)
 
             if filename != renamed_file_name:
