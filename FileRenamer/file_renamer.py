@@ -65,7 +65,7 @@ def rename_files(walk_dir):
                 renamed_file_name = "{}{}".format(prefix, renamed_file_name)
 
             if suffix not in renamed_file_name:
-                renamed_file_name = "{}{}".format(renamed_file_name, suffix)
+                renamed_file_name = "{}{}".format(renamed_file_name.rpartition('.')[0], suffix)
 
             for target in remove_targets:
                 if target in filename:
