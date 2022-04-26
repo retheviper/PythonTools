@@ -19,7 +19,8 @@ for root, _, files in os.walk(walk_dir):
 
             try:
                 pdf = Pdf.open(target, password=password)
-                if arrive := os.path.join(root, 'unlocked_' + filename):
+                arrive = os.path.join(root, 'unlocked_' + filename)
+                if os.path.exists(arrive):
                     continue
                 pdf_unlock = Pdf.new()
                 pdf_unlock.pages.extend(pdf.pages)
