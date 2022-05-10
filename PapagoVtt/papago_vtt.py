@@ -107,24 +107,24 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(widget)
 
-
     # create file list
+
     def create_file_list(self):
         label = QLabel()
         label.setText('Drag and drop file')
         self.list_view = FileListView()
         return label
 
-
     # create remove button
+
     def create_remove_button(self):
         button = QPushButton()
         button.setText('Remove file')
         button.clicked.connect(self.remove_file)
         return button
 
-
     # remove file from file list
+
     def remove_file(self):
         global original_files
         for selected_item in self.list_view.selectedIndexes():
@@ -132,8 +132,8 @@ class MainWindow(QMainWindow):
             self.list_view.takeItem(index)
             original_files.pop(index)
 
-
     # create drop down menu
+
     def create_target_language_selector(self):
         label = QLabel()
         label.setText('Select target language')
@@ -142,23 +142,23 @@ class MainWindow(QMainWindow):
         selector.textActivated.connect(self.set_target_language)
         return label, selector
 
-
     # set translate target language when dropdown menu selected
+
     def set_target_language(self, selectd: str):
         global supported_language_code
         global target
         target = supported_language_code[selectd]
 
-
     # create translate button
+
     def create_translate_button(self):
         self.translate_button = QPushButton()
         self.translate_button.setText('Translate')
         self.translate_button.clicked.connect(self.translate_files)
         self.translate_button.setDisabled(False)
 
-
     # read vtt file and do translate
+
     def translate_files(self):
         self.translate_button.setDisabled(True)
         for file_path in original_files:
@@ -166,11 +166,12 @@ class MainWindow(QMainWindow):
             if source == target:
                 continue
             translated_contents = self.send_request(exported_contents)
-            self.write_result(file_path, original_contents, translated_contents)
+            self.write_result(file_path, original_contents,
+                              translated_contents)
         self.translate_button.setDisabled(False)
 
-
     # get original contents from vtt file
+
     def get_content(self, file_path: str):
         exported_contents: dict[int, str] = {}
         global source
@@ -184,8 +185,8 @@ class MainWindow(QMainWindow):
                     exported_contents[index] = content
         return original_contents, exported_contents
 
-
     # send translate request to papago and get translated message
+
     def send_request(self, contents: dict[int, str]):
         translated_contents: dict[int, str] = {}
 
@@ -196,6 +197,14 @@ class MainWindow(QMainWindow):
         }
 
         for index, content in contents.items():
+
+            next_line = contents.get(index+1)
+            if next_line is not None:
+                content = "{}{}{}".format(content, line_separator, next_line)
+
+            previous_line = contents.get(index-1)
+            if previous_line is not None:
+                continue
 
             payload = {
                 'text': content,
@@ -208,7 +217,13 @@ class MainWindow(QMainWindow):
             if response.status_code == 200:
                 body = response.json()
                 translated_text: str = body['message']['result']['translatedText']
-                translated_contents[index] = translated_text
+
+                if line_separator in translated_text:
+                    multi_line_text = translated_text.split(line_separator)
+                    translated_contents[index] = multi_line_text[0]
+                    translated_contents[index+1] = multi_line_text[1]
+                else:
+                    translated_contents[index] = translated_text
 
                 # wait for API's limitation(only 10 request per second allowed)
                 sleep(0.12)
@@ -224,19 +239,25 @@ class MainWindow(QMainWindow):
 
         return translated_contents
 
-
     # write translated contents to file
+
     def write_result(self, file_path: str, original_contents: list[str], translated_contents: dict[int, str]):
         contents = original_contents.copy()
 
         for index, content in translated_contents.items():
             if 'Language:' in content:
-                contents[index] = content.replace(source, target) + line_separator
+                contents[index] = content.replace(
+                    source, target) + line_separator
             else:
                 contents[index] = content + line_separator
 
         root = os.path.dirname(file_path)
-        file_name = os.path.basename(file_path).replace(source, target)
+
+        original_file_name = os.path.basename(file_path)
+        file_name = original_file_name.replace(source, target)
+        if file_name == original_file_name:
+            file_name = "{}_{}".format(target, file_name)
+
         target_file_path = os.path.join(root, file_name)
 
         with open(target_file_path, 'w') as file:
