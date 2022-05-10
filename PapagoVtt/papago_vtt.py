@@ -255,11 +255,13 @@ class MainWindow(QMainWindow):
         contents = original_contents.copy()
 
         for index, content in translated_contents.items():
+            contents[index] = content + line_separator
+
+        for index, content in enumerate(contents):
             if 'Language:' in content:
                 contents[index] = content.replace(
                     source, target) + line_separator
-            else:
-                contents[index] = content + line_separator
+                break
 
         root = os.path.dirname(file_path)
 
