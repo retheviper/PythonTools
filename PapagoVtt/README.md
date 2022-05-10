@@ -4,6 +4,10 @@
 
 Translate VTT files with [Papago](https://papago.naver.com/).
 
+## Screenshot
+
+![screenshot](misc/screenshot.png)
+
 ## To Use
 
 1. Install requirements (ex: `pip install -r requirements.txt`)
@@ -13,6 +17,7 @@ Translate VTT files with [Papago](https://papago.naver.com/).
 
 ## TODO
 
+- [ ] Add translate option(deeple).
 - [ ] Translate with async.
 - [ ] Add Progress bar.
 - [ ] Prevent freezing GUI while processing.
