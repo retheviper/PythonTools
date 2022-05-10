@@ -107,34 +107,38 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(widget)
 
-    # create file list
-
     def create_file_list(self):
+        """
+        create file list
+        """
         label = QLabel()
         label.setText('Drag and drop file')
         self.list_view = FileListView()
         return label
 
-    # create remove button
-
     def create_remove_button(self):
+        """
+        create remove button
+        """
         button = QPushButton()
         button.setText('Remove file')
         button.clicked.connect(self.remove_file)
         return button
 
-    # remove file from file list
-
     def remove_file(self):
+        """
+        remove file from file list
+        """
         global original_files
         for selected_item in self.list_view.selectedIndexes():
             index = selected_item.row()
             self.list_view.takeItem(index)
             original_files.pop(index)
 
-    # create drop down menu
-
     def create_target_language_selector(self):
+        """
+        create drop down menu
+        """
         label = QLabel()
         label.setText('Select target language')
         selector = QComboBox()
@@ -142,24 +146,27 @@ class MainWindow(QMainWindow):
         selector.textActivated.connect(self.set_target_language)
         return label, selector
 
-    # set translate target language when dropdown menu selected
-
     def set_target_language(self, selectd: str):
+        """
+        set translate target language when dropdown menu selected
+        """
         global supported_language_code
         global target
         target = supported_language_code[selectd]
 
-    # create translate button
-
     def create_translate_button(self):
+        """
+        create translate button
+        """
         self.translate_button = QPushButton()
         self.translate_button.setText('Translate')
         self.translate_button.clicked.connect(self.translate_files)
         self.translate_button.setDisabled(False)
 
-    # read vtt file and do translate
-
     def translate_files(self):
+        """
+        read vtt file and do translate
+        """
         self.translate_button.setDisabled(True)
         for file_path in original_files:
             original_contents, exported_contents = self.get_content(file_path)
@@ -170,9 +177,10 @@ class MainWindow(QMainWindow):
                               translated_contents)
         self.translate_button.setDisabled(False)
 
-    # get original contents from vtt file
-
     def get_content(self, file_path: str):
+        """
+        get original contents from vtt file
+        """
         exported_contents: dict[int, str] = {}
         global source
         with open(file_path, 'r') as file:
@@ -185,9 +193,10 @@ class MainWindow(QMainWindow):
                     exported_contents[index] = content
         return original_contents, exported_contents
 
-    # send translate request to papago and get translated message
-
     def send_request(self, contents: dict[int, str]):
+        """
+        send translate request to papago and get translated message
+        """
         translated_contents: dict[int, str] = {}
 
         headers = {
@@ -239,9 +248,10 @@ class MainWindow(QMainWindow):
 
         return translated_contents
 
-    # write translated contents to file
-
     def write_result(self, file_path: str, original_contents: list[str], translated_contents: dict[int, str]):
+        """
+        write translated contents to file
+        """
         contents = original_contents.copy()
 
         for index, content in translated_contents.items():
