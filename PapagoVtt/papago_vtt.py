@@ -55,13 +55,13 @@ class TranslateService(QObject):
         content_count = len(original_files)
         i = 0
         for file_path in original_files:
-            original_contents, exported_contents = self.get_content(
-                file_path)
-
-            if source == target:
-                continue
-
             try:
+                original_contents, exported_contents = self.get_content(
+                    file_path)
+
+                if source == target:
+                    continue
+
                 translated_contents = self.send_request(exported_contents)
             except Exception as e:
                 self.exception_on_request.emit(e)
@@ -88,12 +88,28 @@ class TranslateService(QObject):
         """
         exported_contents: dict[int, str] = {}
         global source
+        content_start_index = 0
         with open(file_path, 'r') as file:
             original_contents: list[str] = file.readlines()
             for index, line in enumerate(original_contents):
+                if source == '' and 'Language:' in line:
+                    source = line.split(':')[1].strip()
+                    if source.contains('en-'):
+                        source = 'en'
+                    content_start_index = index+2
+                    break
+
+            if source == '':
+                raise Exception(
+                    'Cannot specify source language. Set source language in file (ex: \'Language: en\').'
+                )
+
+            for index, line in enumerate(original_contents):
+                if index <= content_start_index:
+                    continue
+
                 content = line.strip()
-                if source == '' and 'Language:' in content:
-                    source = content.split(':')[1].strip()
+
                 if '-->' not in content and content != '':
                     exported_contents[index] = content
         return original_contents, exported_contents
@@ -142,7 +158,7 @@ class TranslateService(QObject):
                     translated_contents[index] = translated_text
 
                 # wait for API's limitation(only 10 request per second allowed)
-                sleep(0.12)
+                sleep(0.11)
             else:
                 raise Exception(response.json()['errorMessage'])
 
