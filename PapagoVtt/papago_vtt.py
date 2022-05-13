@@ -222,12 +222,10 @@ class MainWindow(QMainWindow):
 
     list_view: QListWidget
     translate_button: QPushButton
+    service_thread: QThread
     service: TranslateService
-    thread: QThread
     progress_each: QProgressBar
-    percent_each: int = 0
     progress_all: QProgressBar
-    percent_all: int = 0
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -264,15 +262,15 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.translate_button)
 
         # set thread and service
-        self.thread = QThread()
+        self.service_thread = QThread()
         self.service = TranslateService()
-        self.service.moveToThread(self.thread)
-        self.thread.started.connect(self.service.translate)
-        self.service.finished.connect(self.thread.quit)
-        self.service.finished.connect(self.service.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
+        self.service.moveToThread(self.service_thread)
+        self.service_thread.started.connect(self.service.translate)
+        self.service_thread.finished.connect(self.service_thread.deleteLater)
         self.service.percent_each.connect(self.update_progress_each)
         self.service.percent_all.connect(self.update_progress_all)
+        self.service.finished.connect(self.service_thread.quit)
+        self.service.finished.connect(self.service.deleteLater)
 
         widget = QWidget()
         widget.setLayout(layout)
@@ -357,9 +355,9 @@ class MainWindow(QMainWindow):
         """
         read vtt file and do translate
         """
-        self.thread.start()
+        self.service_thread.start()
         self.translate_button.setDisabled(True)
-        self.thread.finished.connect(
+        self.service_thread.finished.connect(
             lambda: self.translate_button.setEnabled(True)
         )
 
