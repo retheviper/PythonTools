@@ -45,6 +45,7 @@ class TranslateService(QObject):
     finished = pyqtSignal()
     percent_each = pyqtSignal(int)
     percent_all = pyqtSignal(int)
+    exception_on_request = pyqtSignal(Exception)
 
     def translate(self):
         """
@@ -60,7 +61,12 @@ class TranslateService(QObject):
             if source == target:
                 continue
 
-            translated_contents = self.send_request(exported_contents)
+            try:
+                translated_contents = self.send_request(exported_contents)
+            except Exception as e:
+                self.exception_on_request.emit(e)
+                return
+
             self.write_result(file_path, original_contents,
                               translated_contents)
 
@@ -138,14 +144,7 @@ class TranslateService(QObject):
                 # wait for API's limitation(only 10 request per second allowed)
                 sleep(0.12)
             else:
-                msgBox = QMessageBox().critical(
-                    self,
-                    'Error',
-                    response.json()['errorMessage'],
-                    buttons=QMessageBox.StandardButton.Abort
-                )
-                if msgBox == QMessageBox.StandardButton.Abort:
-                    sys.exit(255)
+                raise Exception(response.json()['errorMessage'])
 
             i += 1
             self.percent_each.emit(self.calculate_percent(i, content_length))
@@ -220,10 +219,11 @@ class MainWindow(QMainWindow):
     main view
     """
 
+    widget: QWidget
     list_view: QListWidget
     translate_button: QPushButton
     service_thread: QThread
-    service: TranslateService
+    service: QObject
     progress_each: QProgressBar
     progress_all: QProgressBar
 
@@ -269,13 +269,14 @@ class MainWindow(QMainWindow):
         self.service_thread.finished.connect(self.service_thread.deleteLater)
         self.service.percent_each.connect(self.update_progress_each)
         self.service.percent_all.connect(self.update_progress_all)
+        self.service.exception_on_request.connect(self.on_fail)
         self.service.finished.connect(self.service_thread.quit)
         self.service.finished.connect(self.service.deleteLater)
 
-        widget = QWidget()
-        widget.setLayout(layout)
+        self.widget = QWidget()
+        self.widget.setLayout(layout)
 
-        self.setCentralWidget(widget)
+        self.setCentralWidget(self.widget)
 
     def create_file_list(self):
         """
@@ -356,6 +357,7 @@ class MainWindow(QMainWindow):
         read vtt file and do translate
         """
         self.service_thread.start()
+
         self.translate_button.setDisabled(True)
         self.service_thread.finished.connect(
             lambda: self.translate_button.setEnabled(True)
@@ -372,6 +374,19 @@ class MainWindow(QMainWindow):
         update progress bar for all files
         """
         self.progress_all.setValue(value)
+
+    def on_fail(self, exception: Exception):
+        """
+        print error message and exit
+        """
+        msgBox = QMessageBox().critical(
+            self,
+            'Error',
+            str(exception),
+            buttons=QMessageBox.StandardButton.Abort
+        )
+        if msgBox == QMessageBox.StandardButton.Abort:
+            sys.exit(255)
 
 
 if __name__ == '__main__':
