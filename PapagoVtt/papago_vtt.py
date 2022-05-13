@@ -43,16 +43,38 @@ class TranslateService(QObject):
     """
 
     finished = pyqtSignal()
-    progress = pyqtSignal(int)
+    percent_each = pyqtSignal(int)
+    percent_all = pyqtSignal(int)
 
     def translate(self):
+        """
+        do translate
+        """
+        self.percent_all.emit(0)
+        content_count = len(original_files)
+        i = 0
         for file_path in original_files:
-            original_contents, exported_contents = self.get_content(file_path)
+            original_contents, exported_contents = self.get_content(
+                file_path)
+
             if source == target:
                 continue
+
             translated_contents = self.send_request(exported_contents)
             self.write_result(file_path, original_contents,
                               translated_contents)
+
+            self.percent_each.emit(0)
+            i += 1
+            self.percent_all.emit(self.calculate_percent(i, content_count))
+
+        self.finished.emit()
+
+    def calculate_percent(self, current, all):
+        """
+        calculate percentage
+        """
+        return int(current/all*100)
 
     def get_content(self, file_path: str):
         """
@@ -82,6 +104,8 @@ class TranslateService(QObject):
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
         }
 
+        content_length = len(contents)
+        i = 0
         for index, content in contents.items():
 
             next_line = contents.get(index+1)
@@ -122,6 +146,9 @@ class TranslateService(QObject):
                 )
                 if msgBox == QMessageBox.StandardButton.Abort:
                     sys.exit(255)
+
+            i += 1
+            self.percent_each.emit(self.calculate_percent(i, content_length))
 
         return translated_contents
 
@@ -197,6 +224,10 @@ class MainWindow(QMainWindow):
     translate_button: QPushButton
     service: TranslateService
     thread: QThread
+    progress_each: QProgressBar
+    percent_each: int = 0
+    progress_all: QProgressBar
+    percent_all: int = 0
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -219,6 +250,14 @@ class MainWindow(QMainWindow):
         label, translate_language = self.create_target_language_selector()
         layout.addWidget(label)
         layout.addWidget(translate_language)
+
+        # add progress bar
+        label = self.create_progress_bar_each()
+        layout.addWidget(label)
+        layout.addWidget(self.progress_each)
+        label = self.create_progress_bar_all()
+        layout.addWidget(label)
+        layout.addWidget(self.progress_all)
 
         # add translate button
         self.create_translate_button()
@@ -276,6 +315,24 @@ class MainWindow(QMainWindow):
         global target
         target = supported_language_code[selectd]
 
+    def create_progress_bar_each(self):
+        """
+        create progress bar for each file
+        """
+        label = QLabel()
+        label.setText('Progress (Each)')
+        self.progress_each = QProgressBar(self)
+        return label
+
+    def create_progress_bar_all(self):
+        """
+        create progress bar for all file
+        """
+        label = QLabel()
+        label.setText('Progress (All)')
+        self.progress_all = QProgressBar(self)
+        return label
+
     def create_translate_button(self):
         """
         create translate button
@@ -291,16 +348,33 @@ class MainWindow(QMainWindow):
         """
         self.thread = QThread()
         self.service = TranslateService()
+
         self.service.moveToThread(self.thread)
         self.thread.started.connect(self.service.translate)
         self.service.finished.connect(self.thread.quit)
         self.service.finished.connect(self.service.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
+        self.service.percent_each.connect(self.update_progress_each)
+        self.service.percent_all.connect(self.update_progress_all)
+
         self.thread.start()
-        self.translate_button.setEnabled(False)
+
+        self.translate_button.setDisabled(True)
         self.thread.finished.connect(
-            lambda: self.translate_button.setDisabled(True)
+            lambda: self.translate_button.setEnabled(True)
         )
+
+    def update_progress_each(self, value):
+        """
+        update progress bar for each files
+        """
+        self.progress_each.setValue(value)
+
+    def update_progress_all(self, value):
+        """
+        update progress bar for all files
+        """
+        self.progress_all.setValue(value)
 
 
 if __name__ == '__main__':
