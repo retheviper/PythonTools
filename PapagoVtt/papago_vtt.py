@@ -1,7 +1,6 @@
 from time import sleep
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QThread, QObject, pyqtSignal
 from PyQt6.QtWidgets import *
-from random import randint
 import os
 import sys
 import requests
@@ -38,136 +37,15 @@ original_files: list[str] = []
 processing: bool = False
 
 
-# drop down file list
-class FileListView(QListWidget):
-    def __init__(self, parent=None):
-        super(FileListView, self).__init__(parent)
-        self.setAcceptDrops(True)
+class TranslateService(QObject):
+    """
+    translate service
+    """
 
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls:
-            event.accept()
-        else:
-            event.ignore()
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
 
-    def dragMoveEvent(self, event):
-        if event.mimeData().hasUrls:
-            event.accept()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event):
-        if event.mimeData().hasUrls:
-            event.accept()
-            for url in event.mimeData().urls():
-                file_path = url.toLocalFile()
-                if file_path.endswith('.vtt') and str(file_path) not in original_files:
-                    # add file path to list
-                    original_files.append(str(file_path))
-                    # add file name to file list view
-                    self.addItem(file_path.split('/')[-1])
-        else:
-            event.ignore()
-
-
-# main view
-class MainWindow(QMainWindow):
-
-    list_view: QListWidget
-    translate_button: QPushButton
-
-    def __init__(self, *args, **kwargs):
-        super(MainWindow, self).__init__(*args, **kwargs)
-        self.setWindowTitle('Papago vtt translator v1.0.0')
-        self.setFixedWidth(800)
-        self.setFixedHeight(600)
-
-        layout = QVBoxLayout()
-
-        # add drop down file list
-        label = self.create_file_list()
-        layout.addWidget(label)
-        layout.addWidget(self.list_view)
-
-        # add remove button for file
-        remove_button = self.create_remove_button()
-        layout.addWidget(remove_button)
-
-        # add language select drop box
-        label, translate_language = self.create_target_language_selector()
-        layout.addWidget(label)
-        layout.addWidget(translate_language)
-
-        # add translate button
-        self.create_translate_button()
-        layout.addWidget(self.translate_button)
-
-        widget = QWidget()
-        widget.setLayout(layout)
-
-        self.setCentralWidget(widget)
-
-    def create_file_list(self):
-        """
-        create file list
-        """
-        label = QLabel()
-        label.setText('Drag and drop file')
-        self.list_view = FileListView()
-        return label
-
-    def create_remove_button(self):
-        """
-        create remove button
-        """
-        button = QPushButton()
-        button.setText('Remove file')
-        button.clicked.connect(self.remove_file)
-        return button
-
-    def remove_file(self):
-        """
-        remove file from file list
-        """
-        global original_files
-        for selected_item in self.list_view.selectedIndexes():
-            index = selected_item.row()
-            self.list_view.takeItem(index)
-            original_files.pop(index)
-
-    def create_target_language_selector(self):
-        """
-        create drop down menu
-        """
-        label = QLabel()
-        label.setText('Select target language')
-        selector = QComboBox()
-        selector.addItems(supported_language_code.keys())
-        selector.textActivated.connect(self.set_target_language)
-        return label, selector
-
-    def set_target_language(self, selectd: str):
-        """
-        set translate target language when dropdown menu selected
-        """
-        global supported_language_code
-        global target
-        target = supported_language_code[selectd]
-
-    def create_translate_button(self):
-        """
-        create translate button
-        """
-        self.translate_button = QPushButton()
-        self.translate_button.setText('Translate')
-        self.translate_button.clicked.connect(self.translate_files)
-        self.translate_button.setDisabled(False)
-
-    def translate_files(self):
-        """
-        read vtt file and do translate
-        """
-        self.translate_button.setDisabled(True)
+    def translate(self):
         for file_path in original_files:
             original_contents, exported_contents = self.get_content(file_path)
             if source == target:
@@ -175,7 +53,6 @@ class MainWindow(QMainWindow):
             translated_contents = self.send_request(exported_contents)
             self.write_result(file_path, original_contents,
                               translated_contents)
-        self.translate_button.setDisabled(False)
 
     def get_content(self, file_path: str):
         """
@@ -274,6 +151,156 @@ class MainWindow(QMainWindow):
 
         with open(target_file_path, 'w') as file:
             file.writelines(contents)
+
+
+class FileListView(QListWidget):
+    """
+    drop down file list
+    """
+
+    def __init__(self, parent=None):
+        super(FileListView, self).__init__(parent)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.accept()
+            for url in event.mimeData().urls():
+                file_path = url.toLocalFile()
+                if file_path.endswith('.vtt') and str(file_path) not in original_files:
+                    # add file path to list
+                    original_files.append(str(file_path))
+                    # add file name to file list view
+                    self.addItem(file_path.split('/')[-1])
+        else:
+            event.ignore()
+
+
+class MainWindow(QMainWindow):
+    """
+    main view
+    """
+
+    list_view: QListWidget
+    translate_button: QPushButton
+    service: TranslateService
+    thread: QThread
+
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+        self.setWindowTitle('Papago vtt translator v1.0.0')
+        self.setFixedWidth(800)
+        self.setFixedHeight(600)
+
+        layout = QVBoxLayout()
+
+        # add drop down file list
+        label = self.create_file_list()
+        layout.addWidget(label)
+        layout.addWidget(self.list_view)
+
+        # add remove button for file
+        remove_button = self.create_remove_button()
+        layout.addWidget(remove_button)
+
+        # add language select drop box
+        label, translate_language = self.create_target_language_selector()
+        layout.addWidget(label)
+        layout.addWidget(translate_language)
+
+        # add translate button
+        self.create_translate_button()
+        layout.addWidget(self.translate_button)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+
+        self.setCentralWidget(widget)
+
+    def create_file_list(self):
+        """
+        create file list
+        """
+        label = QLabel()
+        label.setText('Drag and drop file')
+        self.list_view = FileListView()
+        return label
+
+    def create_remove_button(self):
+        """
+        create remove button
+        """
+        button = QPushButton()
+        button.setText('Remove file')
+        button.clicked.connect(self.remove_file)
+        return button
+
+    def remove_file(self):
+        """
+        remove file from file list
+        """
+        global original_files
+        for selected_item in self.list_view.selectedIndexes():
+            index = selected_item.row()
+            self.list_view.takeItem(index)
+            original_files.pop(index)
+
+    def create_target_language_selector(self):
+        """
+        create drop down menu
+        """
+        label = QLabel()
+        label.setText('Select target language')
+        selector = QComboBox()
+        selector.addItems(supported_language_code.keys())
+        selector.textActivated.connect(self.set_target_language)
+        return label, selector
+
+    def set_target_language(self, selectd: str):
+        """
+        set translate target language when dropdown menu selected
+        """
+        global supported_language_code
+        global target
+        target = supported_language_code[selectd]
+
+    def create_translate_button(self):
+        """
+        create translate button
+        """
+        self.translate_button = QPushButton()
+        self.translate_button.setText('Translate')
+        self.translate_button.clicked.connect(self.translate_files)
+        self.translate_button.setDisabled(False)
+
+    def translate_files(self):
+        """
+        read vtt file and do translate
+        """
+        self.thread = QThread()
+        self.service = TranslateService()
+        self.service.moveToThread(self.thread)
+        self.thread.started.connect(self.service.translate)
+        self.service.finished.connect(self.thread.quit)
+        self.service.finished.connect(self.service.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.start()
+        self.translate_button.setEnabled(False)
+        self.thread.finished.connect(
+            lambda: self.translate_button.setDisabled(True)
+        )
 
 
 if __name__ == '__main__':

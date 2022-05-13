@@ -20,5 +20,4 @@ Translate VTT files with [Papago](https://papago.naver.com/).
 - [ ] Add translate option(deeple).
 - [ ] Translate with async.
 - [ ] Add Progress bar.
-- [ ] Prevent freezing GUI while processing.
 - [ ] Read api credential information from file.
