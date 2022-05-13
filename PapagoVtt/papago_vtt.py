@@ -1,3 +1,4 @@
+from fnmatch import translate
 from time import sleep
 from PyQt6.QtCore import QThread, QObject, pyqtSignal
 from PyQt6.QtWidgets import *
@@ -185,11 +186,11 @@ class TranslateService(QObject):
         root = os.path.dirname(file_path)
 
         original_file_name = os.path.basename(file_path)
-        file_name = original_file_name.replace(source, target)
-        if file_name == original_file_name:
-            file_name = "{}_{}".format(target, file_name)
+        output_file_name = original_file_name.replace(source, target)
+        if output_file_name == original_file_name:
+            output_file_name = "{}_{}".format(target, output_file_name)
 
-        target_file_path = os.path.join(root, file_name)
+        target_file_path = os.path.join(root, output_file_name)
 
         with open(target_file_path, 'w') as file:
             file.writelines(contents)
@@ -237,6 +238,7 @@ class MainWindow(QMainWindow):
 
     widget: QWidget
     list_view: QListWidget
+    translate_language_selector: QComboBox
     translate_button: QPushButton
     service_thread: QThread
     service: QObject
@@ -261,9 +263,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(remove_button)
 
         # add language select drop box
-        label, translate_language = self.create_target_language_selector()
+        label = self.create_target_language_selector()
         layout.addWidget(label)
-        layout.addWidget(translate_language)
+        layout.addWidget(self.translate_language_selector)
 
         # add progress bar
         label = self.create_progress_bar_each()
@@ -328,10 +330,12 @@ class MainWindow(QMainWindow):
         """
         label = QLabel()
         label.setText('Select target language')
-        selector = QComboBox()
-        selector.addItems(supported_language_code.keys())
-        selector.textActivated.connect(self.set_target_language)
-        return label, selector
+        self.translate_language_selector = QComboBox()
+        self.translate_language_selector.addItems(
+            supported_language_code.keys())
+        self.translate_language_selector.textActivated.connect(
+            self.set_target_language)
+        return label
 
     def set_target_language(self, selectd: str):
         """
@@ -373,9 +377,13 @@ class MainWindow(QMainWindow):
         read vtt file and do translate
         """
         self.translate_button.setDisabled(True)
+        self.translate_language_selector.setDisabled(True)
         self.service_thread.start()
         self.service_thread.finished.connect(
             lambda: self.translate_button.setEnabled(True)
+        )
+        self.service_thread.finished.connect(
+            lambda: self.translate_language_selector.setEnabled(True)
         )
 
     def update_progress_each(self, value):
@@ -394,14 +402,12 @@ class MainWindow(QMainWindow):
         """
         print error message and exit
         """
-        msgBox = QMessageBox().critical(
+        QMessageBox().critical(
             self,
             'Error',
             str(exception),
-            buttons=QMessageBox.StandardButton.Abort
+            buttons=QMessageBox.StandardButton.Ok
         )
-        if msgBox == QMessageBox.StandardButton.Abort:
-            sys.exit(255)
 
 
 if __name__ == '__main__':
