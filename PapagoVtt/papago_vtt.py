@@ -263,6 +263,17 @@ class MainWindow(QMainWindow):
         self.create_translate_button()
         layout.addWidget(self.translate_button)
 
+        # set thread and service
+        self.thread = QThread()
+        self.service = TranslateService()
+        self.service.moveToThread(self.thread)
+        self.thread.started.connect(self.service.translate)
+        self.service.finished.connect(self.thread.quit)
+        self.service.finished.connect(self.service.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.service.percent_each.connect(self.update_progress_each)
+        self.service.percent_all.connect(self.update_progress_all)
+
         widget = QWidget()
         widget.setLayout(layout)
 
@@ -346,19 +357,7 @@ class MainWindow(QMainWindow):
         """
         read vtt file and do translate
         """
-        self.thread = QThread()
-        self.service = TranslateService()
-
-        self.service.moveToThread(self.thread)
-        self.thread.started.connect(self.service.translate)
-        self.service.finished.connect(self.thread.quit)
-        self.service.finished.connect(self.service.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.service.percent_each.connect(self.update_progress_each)
-        self.service.percent_all.connect(self.update_progress_all)
-
         self.thread.start()
-
         self.translate_button.setDisabled(True)
         self.thread.finished.connect(
             lambda: self.translate_button.setEnabled(True)
