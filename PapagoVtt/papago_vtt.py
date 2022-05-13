@@ -94,8 +94,6 @@ class TranslateService(QObject):
             for index, line in enumerate(original_contents):
                 if source == '' and 'Language:' in line:
                     source = line.split(':')[1].strip()
-                    if source.contains('en-'):
-                        source = 'en'
                     content_start_index = index+2
                     break
 
@@ -128,19 +126,26 @@ class TranslateService(QObject):
 
         content_length = len(contents)
         i = 0
+
+        # if source is english, only 'en' can be translated
+        source_lang = source
+        if 'en-' in source_lang:
+            source_lang = 'en'
+
         for index, content in contents.items():
 
             next_line = contents.get(index+1)
             if next_line is not None:
-                content = "{}{}{}".format(content, line_separator, next_line)
+                content = "{} {}".format(content, next_line)
 
             previous_line = contents.get(index-1)
             if previous_line is not None:
+                translated_contents[index] = ''
                 continue
 
             payload = {
                 'text': content,
-                'source': source,
+                'source': source_lang,
                 'target': target
             }
 
@@ -150,12 +155,7 @@ class TranslateService(QObject):
                 body = response.json()
                 translated_text: str = body['message']['result']['translatedText']
 
-                if line_separator in translated_text:
-                    multi_line_text = translated_text.split(line_separator)
-                    translated_contents[index] = multi_line_text[0]
-                    translated_contents[index+1] = multi_line_text[1]
-                else:
-                    translated_contents[index] = translated_text
+                translated_contents[index] = translated_text
 
                 # wait for API's limitation(only 10 request per second allowed)
                 sleep(0.11)
