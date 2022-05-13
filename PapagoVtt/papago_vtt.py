@@ -29,7 +29,7 @@ client_secret = 'YOUR_CLIENT_SECRET'
 api_url = 'https://openapi.naver.com/v1/papago/n2mt'
 
 
-# variables
+# global variables
 source: str = ''
 target: str = 'ko'
 line_separator: str = '\n'
@@ -356,9 +356,8 @@ class MainWindow(QMainWindow):
         """
         read vtt file and do translate
         """
-        self.service_thread.start()
-
         self.translate_button.setDisabled(True)
+        self.service_thread.start()
         self.service_thread.finished.connect(
             lambda: self.translate_button.setEnabled(True)
         )
