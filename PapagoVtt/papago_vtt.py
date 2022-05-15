@@ -238,6 +238,7 @@ class MainWindow(QMainWindow):
 
     widget: QWidget
     list_view: QListWidget
+    remove_button: QPushButton
     translate_language_selector: QComboBox
     translate_button: QPushButton
     service_thread: QThread
@@ -259,8 +260,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.list_view)
 
         # add remove button for file
-        remove_button = self.create_remove_button()
-        layout.addWidget(remove_button)
+        self.create_remove_button()
+        layout.addWidget(self.remove_button)
 
         # add language select drop box
         label = self.create_target_language_selector()
@@ -309,10 +310,9 @@ class MainWindow(QMainWindow):
         """
         create remove button
         """
-        button = QPushButton()
-        button.setText('Remove file')
-        button.clicked.connect(self.remove_file)
-        return button
+        self.remove_button = QPushButton()
+        self.remove_button.setText('Remove file')
+        self.remove_button.clicked.connect(self.remove_file)
 
     def remove_file(self):
         """
@@ -376,15 +376,27 @@ class MainWindow(QMainWindow):
         """
         read vtt file and do translate
         """
-        self.translate_button.setDisabled(True)
-        self.translate_language_selector.setDisabled(True)
+        self.disable_all_components()
         self.service_thread.start()
-        self.service_thread.finished.connect(
-            lambda: self.translate_button.setEnabled(True)
-        )
-        self.service_thread.finished.connect(
-            lambda: self.translate_language_selector.setEnabled(True)
-        )
+        self.service_thread.finished.connect(self.enable_all_components)
+
+    def disable_all_components(self):
+        """
+        set all manipulable components to disabled
+        """
+        self.list_view.setDisabled(True)
+        self.remove_button.setDisabled(True)
+        self.translate_language_selector.setDisabled(True)
+        self.translate_button.setDisabled(True)
+
+    def enable_all_components(self):
+        """
+        set all manipulable components to enabled
+        """
+        self.list_view.setEnabled(True)
+        self.remove_button.setEnabled(True)
+        self.translate_language_selector.setEnabled(True)
+        self.translate_button.setEnabled(True)
 
     def update_progress_each(self, value):
         """
