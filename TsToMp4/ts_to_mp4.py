@@ -9,7 +9,9 @@ if len(sys.argv) < 2:
 walk_dir = os.path.abspath(sys.argv[1])
 print('Base path: ' + walk_dir)
 
-target_extensions = ['.ts', '.m2ts', '.m4v', '.avi', '.wmv', '.flv', '.asf', '.webm']
+target_extensions = [
+    '.ts', '.m2ts', '.m4v', '.avi', '.wmv', '.flv', '.asf', '.webm', '.mov'
+]
 
 converted_files = []
 
@@ -19,10 +21,17 @@ for root, subdirs, files in os.walk(walk_dir):
 
         for extension in target_extensions:
 
-            if filename.endswith(extension):
+            if filename.lower().endswith(extension):
                 input_path = os.path.join(root, filename)
                 output_path = os.path.splitext(input_path)[0] + ".mp4"
+
+                if os.path.exists(output_path):
+                    print("Skipping {}  because {} already exists."
+                          .format(input_path, output_path))
+                    continue
+
                 converted_files.append(input_path)
+
                 (
                     ffmpeg
                     .input(input_path)
