@@ -14,14 +14,14 @@ for root, subdirs, files in os.walk(walk_dir):
 
     if walk_dir != root and files:
 
-        archive = root + '.zip'
-        os.chdir(root)
-
-        files[:] = [file for file in files if not file.startswith('.')]
+        parent_dir = os.path.abspath(os.path.join(root, os.pardir))
+        archive = os.path.join(parent_dir, os.path.basename(root) + '.zip')
+        files = [os.path.join(root, file) for file in files if not file.startswith('.')]
 
         try:
             if os.path.exists(archive):
                 os.remove(archive)
             patoolib.create_archive(archive, files)
-        except:
+        except OSError as e:
+            print('Error: ' + str(e))
             continue
